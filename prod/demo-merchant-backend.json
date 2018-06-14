@@ -1,0 +1,52 @@
+{
+  "_comment" : "Simple Packer Template using Amazon Linux 2017.03",
+  "variables": {
+        "region":         "ap-southeast-1"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "region": "ap-southeast-1",
+    "source_ami": "ami-adffcdd1",
+    "instance_type": "m5.large",
+    "ssh_username": "ec2-user",
+    "ami_name": "pgw-prod-demo-merchant-backend-1.0.1-beta"
+  }],
+  "provisioners": [
+        {
+    "type": "file",
+      "source": "/packer/prod/demo-merchant-backend/source/",
+      "destination": "/home/ec2-user"
+    },
+        {
+    "type": "shell",
+    "inline": [
+        "sleep 30",
+        "sudo -i",
+        "sudo chmod -R 777 /opt/pgwtomcat/",
+        "cd /opt/pgwtomcat/webapps",
+        "sudo mv /home/ec2-user/pgw-demo-merchant-backend-1*.war /opt/pgwtomcat/webapps/",
+        "sudo mv /home/ec2-user/aws_monitor.html /opt/pgwtomcat/webapps/",
+        "sudo mv /home/ec2-user/awslogs.conf /etc/awslogs/",
+        "sudo chown -R pgwtomcat: pgw-demo-merchant-backend-1*.war",
+        "sudo  /etc/init.d/tomcat8 restart",
+        "sleep 30",
+        "sudo /etc/init.d/tomcat8 stop",
+        "sleep 30",
+        "cd /opt/pgwtomcat/webapps/ROOT",
+        "sudo rm -rf *",
+        "sudo chmod -R 777 /opt/pgwtomcat/webapps/pgw-demo-merchant-backend-1*",
+        "cd /opt/pgwtomcat/webapps/pgw-demo-merchant-backend-1*",
+        "sudo mv * /opt/pgwtomcat/webapps/ROOT/",
+        "cd /opt/pgwtomcat/webapps/",
+        "sudo rm -rf /opt/pgwtomcat/webapps/pgw-demo-merchant-backend-1*",
+        "cd /opt/pgwtomcat/webapps/",
+        "sudo mv aws_monitor.html /opt/pgwtomcat/webapps/ROOT/",
+        "sudo chown pgwtomcat: /opt/pgwtomcat/webapps/ROOT/aws_monitor.html",
+        "sudo /etc/init.d/tomcat8 start",
+        "sleep 30",
+        "sudo chmod -R 700 /opt/pgwtomcat/"
+    ]
+        }
+  ]
+}
+
